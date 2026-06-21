@@ -54,3 +54,30 @@ export async function getProblems(){
             desc(problems.createdAt)
           )
 }
+
+export async function toggleProblemStatus(
+    problemId: string,
+    currentStatus: string,
+){
+    const nextStatus = currentStatus === "solved"?"pending":"solved";
+    await db
+           .update(problems)
+           .set({
+            status:nextStatus,
+            completedAt: 
+            nextStatus === "solved" ? new Date() : null,
+           })
+           .where(eq(problems.id,problemId));
+}
+
+export async function updateProblemNotes(
+    problemId: string,
+    notes: string,
+){
+    await db
+    .update(problems)
+    .set({
+        notes,
+    })
+    .where(eq(problems.id,problemId));
+}
