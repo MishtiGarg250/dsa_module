@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { addProblem } from "@/actions/problem.action";
 
 export default function AddProblemForm() {
   const [url, setUrl] = useState("");
@@ -14,10 +13,17 @@ export default function AddProblemForm() {
     try {
       setLoading(true);
       setErrorMsg("");
-      const result = await addProblem(url);
       
-      if (!result?.success) {
-        setErrorMsg(result?.error || "Failed to add problem");
+      const response = await fetch("/api/problems", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        setErrorMsg(result.error || "Failed to add problem");
       } else {
         setUrl("");
       }

@@ -7,54 +7,7 @@ import { getLeetcodeProblem } from "@/lib/metadata";
 import { desc, eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
-export async function addProblem(url: string) {
-  try {
-    const { userId } = await auth();
-    if (!userId) {
-      return { success: false, error: "Unauthorized" };
-    }
-    const platform = detectPlatform(url);
-    if (platform !== "leetcode") {
-      return { success: false, error: "Only Leetcode supported currently" };
-    }
 
-    const slug = extractLeetcodeSlug(url);
-    if (!slug) {
-      return { success: false, error: "Invalid Leetcode URL" };
-    }
-    const problem = await getLeetcodeProblem(slug);
-    if (!problem || !problem.title) {
-      return { success: false, error: "Could not fetch problem details from LeetCode" };
-    }
-
-    // Check if the user already added this problem
-    const existing = await db
-      .select()
-      .from(problems)
-      .where(and(eq(problems.userId, userId), eq(problems.title, problem.title)))
-      .limit(1);
-
-    if (existing.length > 0) {
-      return { success: false, error: "You have already added this problem." };
-    }
-
-    const [created] = await db.insert(problems)
-      .values({
-        userId,
-        title: problem.title,
-        difficulty: problem.difficulty,
-        platform,
-        url,
-      })
-      .returning();
-
-    revalidatePath("/");
-    return { success: true, data: created };
-  } catch (error: any) {
-    console.error("Failed to add problem:", error);
-    return { success: false, error: error.message || "An unexpected error occurred." };
-  }
-}
 
 export async function getProblems() {
   try {
