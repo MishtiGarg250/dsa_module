@@ -14,11 +14,16 @@ export default function AddProblemForm() {
     try {
       setLoading(true);
       setErrorMsg("");
-      await addProblem(url);
-      setUrl("");
+      const result = await addProblem(url);
+      
+      if (!result?.success) {
+        setErrorMsg(result?.error || "Failed to add problem");
+      } else {
+        setUrl("");
+      }
     } catch (error: any) {
       console.error(error);
-      setErrorMsg(error.message || "Failed to add problem");
+      setErrorMsg("An unexpected error occurred.");
     } finally {
       setLoading(false);
     }

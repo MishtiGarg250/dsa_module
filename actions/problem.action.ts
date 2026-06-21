@@ -11,20 +11,20 @@ export async function addProblem(url: string) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      throw new Error("Unauthorized");
+      return { success: false, error: "Unauthorized" };
     }
     const platform = detectPlatform(url);
     if (platform !== "leetcode") {
-      throw new Error("Only Leetcode supported currently");
+      return { success: false, error: "Only Leetcode supported currently" };
     }
 
     const slug = extractLeetcodeSlug(url);
     if (!slug) {
-      throw new Error("Invalid Leetcode URL");
+      return { success: false, error: "Invalid Leetcode URL" };
     }
     const problem = await getLeetcodeProblem(slug);
     if (!problem || !problem.title) {
-      throw new Error("Could not fetch problem details from LeetCode");
+      return { success: false, error: "Could not fetch problem details from LeetCode" };
     }
 
     // Check if the user already added this problem
@@ -35,7 +35,7 @@ export async function addProblem(url: string) {
       .limit(1);
 
     if (existing.length > 0) {
-      throw new Error("You have already added this problem.");
+      return { success: false, error: "You have already added this problem." };
     }
 
     const [created] = await db.insert(problems)
@@ -49,10 +49,10 @@ export async function addProblem(url: string) {
       .returning();
 
     revalidatePath("/");
-    return created;
-  } catch (error) {
+    return { success: true, data: created };
+  } catch (error: any) {
     console.error("Failed to add problem:", error);
-    throw error;
+    return { success: false, error: error.message || "An unexpected error occurred." };
   }
 }
 
