@@ -4,7 +4,7 @@ import { db } from "@/src/db";
 import { problems } from "@/src/db/schema";
 import { detectPlatform, extractLeetcodeSlug } from "@/lib/parser";
 import { getLeetcodeProblem } from "@/lib/metadata";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function addProblem(url: string) {
@@ -25,6 +25,17 @@ export async function addProblem(url: string) {
     const problem = await getLeetcodeProblem(slug);
     if (!problem || !problem.title) {
       throw new Error("Could not fetch problem details from LeetCode");
+    }
+
+    // Check if the user already added this problem
+    const existing = await db
+      .select()
+      .from(problems)
+      .where(and(eq(problems.userId, userId), eq(problems.title, problem.title)))
+      .limit(1);
+
+    if (existing.length > 0) {
+      throw new Error("You have already added this problem.");
     }
 
     const [created] = await db.insert(problems)
